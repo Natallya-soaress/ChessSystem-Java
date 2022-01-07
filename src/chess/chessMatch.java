@@ -1,5 +1,8 @@
 package chess;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import boardGame.Board;
 import boardGame.Piece;
 import boardGame.Position;
@@ -9,10 +12,25 @@ import chess.pieces.Rook;
 public class chessMatch {
 	
 	private Board board;
+	private int turn;
+	private Color currentPlayer;
+	
+	private List<Piece> piecesOnTheBoard = new ArrayList<>();
+	private List<Piece> capturedPieces = new ArrayList<>();
 	
 	public chessMatch() {
 		board = new Board(8,8);
+		turn = 1;
+		currentPlayer = Color.WHITE;
 		initialSetup();
+	}
+	
+	public int getTurn() {
+		return turn;
+	}
+	
+	public Color getCurrentPlayer() {
+		return currentPlayer;
 	}
 	
 	public chessPiece[][] getPieces(){
@@ -37,6 +55,7 @@ public class chessMatch {
 		validateSourcePosition(source);
 		validateTargetPosition(source, target);
 		Piece capturedPiece = makeMove(source, target);
+		nextTurn();
 		return (chessPiece)capturedPiece;
 	}
 	
@@ -44,12 +63,20 @@ public class chessMatch {
 		Piece p = board.removePiece(source);
 		Piece capturedPiece = board.removePiece(target);
 		board.placePiece(p, target);
+		
+		if (capturedPiece != null) {
+			piecesOnTheBoard.remove(capturedPiece);
+			capturedPieces.add(capturedPiece);
+		}
 		return capturedPiece;
 	}
 	
 	private void validateSourcePosition(Position position) {
 		if(!board.thereIsAPiece(position)) {
 			throw new chessException("There is no piece on source position!");
+		}
+		if (currentPlayer != ((chessPiece)board.piece(position)).getColor()) {
+			throw new chessException("The chosen piece is not yours");
 		}
 		if(!board.piece(position).isThereAnyPossibleMove()) {
 			throw new chessException("There is no possible moves for the chosen piece!");
@@ -62,8 +89,14 @@ public class chessMatch {
 		}
 	}
 	
+	private void nextTurn() {
+		turn++;
+		currentPlayer = (currentPlayer == Color.WHITE) ? Color.BLACK : Color.WHITE;
+	}
+	
 	private void placeNewPiece(char column, int row, chessPiece piece) {
 		board.placePiece(piece, new chessPosition(column, row).toPosition());
+		piecesOnTheBoard.add(piece);
 	}
 
 	public void initialSetup() {
